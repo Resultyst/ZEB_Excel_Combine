@@ -59,4 +59,5 @@ def upload_files():
     return send_file(combined_filepath, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    from os import environ
+    app.run(debug=False, host='0.0.0.0', port=int(environ.get("PORT", 5000)))
