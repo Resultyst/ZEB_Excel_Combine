@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Excel Files</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+      }
+      h1 {
+        color: #333;
+      }
+      form {
+        margin-top: 20px;
+      }
+      input[type="file"] {
+        padding: 10px;
+      }
+      input[type="submit"] {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      input[type="submit"]:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <center><h1>Upload Excel Files</h1></center>
+    <br><br>
+    <center>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="files">Select multiple Excel files (each with 2 sheets):</label><br><br>
+        <input type="file" name="files" id="files" multiple><br><br>
+        <input type="submit" value="Upload and Combine">
+      </form>
+    </center>
+  </body>
+</html>
