@@ -1,26 +1,20 @@
-from flask import Flask, request, render_template, send_file
+import streamlit as st
 import pandas as pd
 import os
 
-app = Flask(__name__)
-
+# Set the upload folder
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/upload', methods=['POST'])
-def upload_files():
-    files = request.files.getlist('files')
-    
+# Function to combine data from Excel sheets
+def combine_excel_files(files):
     combined_data_sheet1 = None  # For combining the first sheet
     combined_data_sheet2 = None  # For combining the second sheet
 
-    for i, file in enumerate(files):
-        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(filepath)
+    for file in files:
+        filepath = os.path.join(UPLOAD_FOLDER, file.name)
+        with open(filepath, "wb") as f:
+            f.write(file.getbuffer())
 
         # Read both sheets from each Excel file
         xls = pd.ExcelFile(filepath)
@@ -49,15 +43,27 @@ def upload_files():
         else:
             combined_data_sheet2 = pd.concat([combined_data_sheet2, safe_read_sheet(1, second_sheet=True)], ignore_index=True)
 
-    combined_filepath = os.path.join(UPLOAD_FOLDER, 'combined_data.xlsx')
+    return combined_data_sheet1, combined_data_sheet2
 
-    # Write the combined data into two separate sheets
-    with pd.ExcelWriter(combined_filepath, engine='xlsxwriter') as writer:
-        combined_data_sheet1.to_excel(writer, sheet_name='Combined Sheet 1', index=False)
-        combined_data_sheet2.to_excel(writer, sheet_name='Combined Sheet 2', index=False)
+# Streamlit app layout
+st.title("Excel Files Merger")
 
-    return send_file(combined_filepath, as_attachment=True)
+# File uploader
+uploaded_files = st.file_uploader("Upload Excel files", type=['xls', 'xlsx'], accept_multiple_files=True)
 
-if __name__ == '__main__':
-    from os import environ
-    app.run(debug=False, host='0.0.0.0', port=int(environ.get("PORT", 5000)))
+if st.button("Combine"):
+    if uploaded_files:
+        # Combine the Excel files
+        combined_sheet1, combined_sheet2 = combine_excel_files(uploaded_files)
+
+        # Create a download link for the combined data
+        combined_filepath = os.path.join(UPLOAD_FOLDER, 'combined_data.xlsx')
+        with pd.ExcelWriter(combined_filepath, engine='xlsxwriter') as writer:
+            combined_sheet1.to_excel(writer, sheet_name='Combined Sheet 1', index=False)
+            combined_sheet2.to_excel(writer, sheet_name='Combined Sheet 2', index=False)
+
+        # Provide a download link for the combined Excel file
+        with open(combined_filepath, "rb") as f:
+            st.download_button("Download Combined Excel File", f, file_name='combined_data.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    else:
+        st.error("Please upload at least one Excel file.")
